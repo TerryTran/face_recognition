@@ -2,7 +2,7 @@ from PIL import Image
 import face_recognition
 
 # Load the jpg file into a numpy array
-image = face_recognition.load_image_file("biden.jpg")
+image = face_recognition.load_image_file("e1.jpg")
 
 # Find all the faces in the image
 face_locations = face_recognition.face_locations(image)

@@ -6,7 +6,7 @@ import os
 
 def read_employee_in_folder(folder_path):
     employees = {}
-    for img in glob.glob(folder_path + '*.jpg'): # All jpeg images
+    for img in glob.glob(folder_path + '*.jpg'):  # All jpeg images
         employee_name = os.path.splitext(os.path.basename(img))[0]
         employee_image = face_recognition.load_image_file(img)
         employees[employee_name] = employee_image
@@ -23,15 +23,12 @@ def get_face_encodings(images):
 def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
     face_distances = face_recognition.face_distance(known_face_encodings, face_encoding_to_check)
     min_distance = min(face_distances)
-    print(min_distance)
+    # print(min_distance)
     match_point = min_distance
     if match_point > tolerance:
         match_point = tolerance
     return list(face_distances <= match_point)
 
-
-# Get a reference to webcam #0 (the default one)
-video_capture = cv2.VideoCapture(0)
 
 # Load a sample picture and learn how to recognize it.
 enclave_employees = read_employee_in_folder("/home/terry/Documents/ML/enclave-employee-images/")
@@ -43,20 +40,19 @@ enclave_employees_face_encoding = get_face_encodings(enclave_employees_image)
 face_locations = []
 face_encodings = []
 face_names = []
-process_this_frame = True
+i = 0
 
 while True:
-    # Grab a single frame of video
-    ret, frame = video_capture.read()
+    folder_path = input("Enter path: ")
+    print("Processing " + folder_path)
 
-    # Resize frame of video to 1/4 size for faster face recognition processing
-    small_frame = cv2.resize(frame, (0, 0), fx=0.8, fy=0.8)
+    for img in glob.glob(folder_path + '*.jpg'):  # All jpeg images
+        print("Processing image: " + img)
+        unknown_image = cv2.imread(img)
 
-    # Only process every other frame of video to save time
-    if process_this_frame:
         # Find all the faces and face encodings in the current frame of video
-        face_locations = face_recognition.face_locations(small_frame)
-        face_encodings = face_recognition.face_encodings(small_frame, face_locations)
+        face_locations = face_recognition.face_locations(unknown_image)
+        face_encodings = face_recognition.face_encodings(unknown_image, face_locations)
 
         face_names = []
         for face_encoding in face_encodings:
@@ -71,36 +67,26 @@ while True:
 
             face_names.append(name)
 
-    process_this_frame = not process_this_frame
+        # Display the results
+        for (top, right, bottom, left), name in zip(face_locations, face_names):
+            # Draw a box around the face
+            cv2.rectangle(unknown_image, (left, top), (right, bottom), (0, 0, 255), 2)
 
+            # Draw a label with a name below the face
+            cv2.rectangle(unknown_image, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            cv2.putText(unknown_image, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
-    # Display the results
-    for (top, right, bottom, left), name in zip(face_locations, face_names):
-        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-        top *= 1.25
-        top = int(top)
-        right *= 1.25
-        right = int(right)
-        bottom *= 1.25
-        bottom = int(bottom)
-        left *= 1.25
-        left = int(left)
+        out_dir = folder_path + "out/"
+        print("Write image to: " + out_dir)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        cv2.imwrite(out_dir + str(i) + ".jpg", unknown_image)
+        i = i + 1
 
-        # Draw a box around the face
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-
-        # Draw a label with a name below the face
-        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-        font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-
-    # Display the resulting image
-    cv2.imshow('Video', frame)
-
-    # Hit 'q' on the keyboard to quit!
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    input_var = input("Do you want to continue (Y/N): ")
+    if input_var.lower() == "y":
+        continue
+    else:
         break
 
-# Release handle to the webcam
-video_capture.release()
-cv2.destroyAllWindows()
