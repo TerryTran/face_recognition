@@ -34,12 +34,11 @@ def compare_faces(known_face_encodings, face_encoding_to_check, tolerance=0.6):
 video_capture = cv2.VideoCapture(0)
 
 # Load a sample picture and learn how to recognize it.
-enclave_employees = read_employee_in_folder("/home/terry/Documents/ML/enclave-employee-images/")
+enclave_employees = read_employee_in_folder("/home/terry/Documents/ML/face_recognition/examples/enclave-employee-images/")
 enclave_employees_name = list(enclave_employees.keys())
 enclave_employees_image = list(enclave_employees.values())
 enclave_employees_face_encoding = get_face_encodings(enclave_employees_image)
 
-# Initialize some variables
 face_locations = []
 face_encodings = []
 face_names = []
